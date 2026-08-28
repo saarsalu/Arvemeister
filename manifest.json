@@ -1,0 +1,35 @@
+{
+  "id": "/Arvemeister/",
+  "name": "ArveMeister PRO",
+  "short_name": "ArveMeister",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "description": "Professionaalne hinnapakkumiste ja arvete generaator.",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ArveMeister töölaud"
+    },
+    {
+      "src": "screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ArveMeister mobiilis"
+    }
+  ]
+}

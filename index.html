@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>ArveMeister PRO</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  #signaturePad {
+    touch-action: none !important;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, select, textarea, button {
+    font-size: 16px !important;
+    touch-action: manipulation;
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-28 font-sans">
+
+<!-- PÄIS -->
+<header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-30 flex justify-between items-center shadow-lg">
+  <div class="flex items-center gap-2">
+    <div class="bg-amber-500 text-slate-950 font-black px-2.5 py-1.5 rounded-lg text-lg leading-none tracking-tighter">AM</div>
+    <span class="font-bold text-white italic tracking-tight text-lg">ArveMeister <span class="text-amber-500 text-xs px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 not-italic">PRO</span></span>
+  </div>
+  <button type="button" onclick="createNewQuote()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all shadow-md">+ UUS</button>
+</header>
+
+<main class="max-w-xl mx-auto p-4 space-y-4">
+
+  <!-- FIRMA SEADED JA OMAKULUD -->
+  <details class="bg-slate-800 border border-amber-500/40 rounded-2xl p-4 shadow-lg">
+    <summary class="font-bold text-amber-400 cursor-pointer uppercase text-xs tracking-wider flex justify-between items-center">
+      <span>⚙️ Omakulud + Firma & Pank</span>
+      <span class="text-[10px] text-slate-400">Muuda</span>
+    </summary>
+    <div class="mt-4 space-y-3">
+      <div class="grid grid-cols-3 gap-2">
+        <div>
+          <label class="text-slate-400 text-xs block mb-1">Töö €/h</label>
+          <input id="costLabor" type="number" inputmode="decimal" value="25" oninput="recalc()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs block mb-1">Tehnika €/h</label>
+          <input id="costEquip" type="number" inputmode="decimal" value="10" oninput="recalc()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs block mb-1">Üldkulud €/h</label>
+          <input id="costOverhead" type="number" inputmode="decimal" value="5" oninput="recalc()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold outline-none focus:border-amber-500">
+        </div>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+        <span class="text-slate-400 text-xs font-bold">Päris omakulu tunnis:</span>
+        <span id="trueCostHourlyDisplay" class="text-amber-400 font-mono font-bold text-sm">40.00 €/h</span>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-slate-700">
+        <input id="compName" placeholder="Firma ametlik nimi" onchange="saveCompany()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold outline-none focus:border-amber-500" value="Minu Firma OÜ">
+        <div class="grid grid-cols-2 gap-2">
+          <input id="compReg" placeholder="Reg.kood" onchange="saveCompany()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-amber-500">
+          <input id="compVat" placeholder="KMKR nr" onchange="saveCompany()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-amber-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="compPhone" placeholder="Tel / E-post" onchange="saveCompany()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-amber-500" value="+372 5555 5555">
+          <input id="taxRate" type="number" inputmode="decimal" placeholder="KM %" value="22" oninput="saveCompany();recalc()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-amber-500">
+        </div>
+        <input id="compIban" placeholder="Pangakonto IBAN (EE...)" onchange="saveCompany()" class="w-full bg-slate-900 border border-amber-500/50 rounded-xl p-3 text-amber-400 font-mono font-bold outline-none">
+        <input id="compBank" placeholder="Panga nimi (Swedbank/SEB/LHV)" onchange="saveCompany()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none">
+      </div>
+    </div>
+  </details>
+
+  <!-- ARVE PÕHIVORM -->
+  <section class="bg-slate-800 border border-slate-700 rounded-3xl p-4 space-y-4 border-t-4 border-t-amber-500 shadow-xl">
+    <div class="flex justify-between gap-3 border-b border-slate-700 pb-3">
+      <div>
+        <h1 class="text-xl font-black italic">Arve / Pakkumine</h1>
+        <p id="quoteIdDisplay" class="text-amber-400 font-mono text-sm mt-1 font-bold">#AM-0000</p>
+      </div>
+      <div class="text-right">
+        <div class="text-slate-400 text-xs font-bold">Kuupäev: <span id="quoteDate" class="text-white"></span></div>
+        <label class="text-amber-400 text-xs block mt-1 font-bold">Maksetähtaeg
+          <input id="dueDate" type="date" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white text-xs outline-none">
+        </label>
+      </div>
+    </div>
+
+    <!-- OSTJA INFO -->
+    <div class="space-y-2">
+      <label class="text-slate-400 text-xs font-bold uppercase tracking-wider">Ostja (Klient)</label>
+      <input id="clientName" type="text" autocomplete="off" placeholder="Kliendi nimi / Ettevõte" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold uppercase outline-none focus:border-amber-500">
+      <div class="grid grid-cols-2 gap-2">
+        <input id="clientPhone" type="text" placeholder="Telefon" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none">
+        <input id="clientAddress" type="text" placeholder="Aadress / Objekt" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none">
+      </div>
+    </div>
+
+    <!-- TOOTED / TEENUSED -->
+    <div class="space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Teenused ja materjalid</h2>
+        <button type="button" onclick="addItem()" class="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition-all">+ Lisa rida</button>
+      </div>
+      <div id="itemsContainer" class="space-y-3"></div>
+    </div>
+
+    <!-- KASUMIMARGINAAL -->
+    <div class="bg-slate-950 rounded-2xl p-4 border border-amber-500/30 space-y-3">
+      <div class="flex justify-between items-center">
+        <span class="text-amber-400 font-bold text-xs uppercase tracking-wider">📈 Kasumimarginaal</span>
+        <span id="marginPercentDisplay" class="text-amber-400 font-black text-lg">20%</span>
+      </div>
+      <input id="marginSlider" type="range" min="0" max="60" value="20" oninput="recalc()" class="w-full accent-amber-500 cursor-pointer">
+      <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+          <div class="text-slate-500 text-[10px]">TÖÖ OMAKULU</div>
+          <div id="jobCostDisplay" class="font-bold text-slate-300">0.00 €</div>
+        </div>
+        <div class="bg-emerald-950/40 rounded-xl p-2.5 border border-emerald-500/30">
+          <div class="text-emerald-400 text-[10px]">PUHAS KASUM</div>
+          <div id="jobProfitDisplay" class="text-emerald-400 font-black">+0.00 €</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KOKKUVÕTE -->
+    <div class="bg-slate-950/60 rounded-2xl p-4 space-y-2 border border-slate-700 font-mono text-sm">
+      <div class="flex justify-between text-slate-400 text-xs"><span>Vahesumma:</span><span id="subtotalVal">0.00 €</span></div>
+      <div class="flex justify-between text-slate-400 text-xs"><span>KM (<span id="taxRateLabel">22</span>%):</span><span id="taxVal">0.00 €</span></div>
+      <div class="flex justify-between items-end border-t border-slate-800 pt-3">
+        <span class="text-slate-400 text-xs font-sans font-bold">KOKKU TASUDA:</span>
+        <span id="grandTotalVal" class="text-amber-400 text-xl font-black">0.00 €</span>
+      </div>
+    </div>
+
+    <!-- ALLKIRJA LÕUEND -->
+    <div class="space-y-2">
+      <div class="flex justify-between items-center">
+        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Kliendi allkiri (joonista näpuga)</span>
+        <button type="button" onclick="clearSignature()" class="text-red-400 text-xs underline">Kustuta</button>
+      </div>
+      <div class="border-2 border-dashed border-slate-700 rounded-2xl bg-slate-950 h-36 relative overflow-hidden">
+        <canvas id="signaturePad" class="w-full h-full block" style="touch-action: none;"></canvas>
+        <div id="sigHint" class="absolute inset-0 flex items-center justify-center text-slate-600 text-xs pointer-events-none">✍️ Joonista siia näpuga...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NUPUD -->
+  <div class="grid grid-cols-2 gap-3">
+    <button type="button" onclick="generatePDF()" class="bg-amber-500 text-slate-950 font-black p-4 rounded-2xl shadow-lg active:scale-95 transition-all text-xs tracking-wider uppercase">📄 Jaga / Salvesta PDF</button>
+    <button type="button" onclick="saveQuote()" class="bg-slate-700 text-white font-black p-4 rounded-2xl active:scale-95 transition-all text-xs tracking-wider uppercase">💾 Salvesta äppi</button>
+  </div>
+
+  <div id="pdfLinkBox" class="hidden bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl text-center">
+    <a id="pdfLink" href="#" target="_blank" class="text-emerald-400 font-bold text-sm">✓ PDF valmis – ava siit</a>
+  </div>
+
+  <!-- AJALUGU -->
+  <section class="bg-slate-800 border border-slate-700 rounded-3xl p-4 space-y-3 shadow-lg">
+    <div class="flex justify-between items-center">
+      <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Varasemad pakkumised</h3>
+      <button type="button" onclick="clearHistory()" class="text-slate-500 text-xs underline">Tühjenda</button>
+    </div>
+    <div id="historyContainer" class="space-y-2"></div>
+  </section>
+</main>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+let items = [];
+let hasSignature = false;
+let currentQuoteId = '';
+const canvas = document.getElementById('signaturePad');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+
+function el(id){ return document.getElementById(id); }
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#f59e0b';
+}
+
+function getTouchPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startDrawing(e) {
+  if(e.cancelable) e.preventDefault();
+  drawing = true;
+  hasSignature = true;
+  el('sigHint').style.display = 'none';
+  const p = getTouchPos(e);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+}
+
+function draw(e) {
+  if (!drawing) return;
+  if(e.cancelable) e.preventDefault();
+  const p = getTouchPos(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+}
+
+function stopDrawing(e) {
+  if (drawing) {
+    ctx.closePath();
+    drawing = false;
+  }
+}
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+window.addEventListener('mouseup', stopDrawing);
+
+canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+window.addEventListener('touchend', stopDrawing, { passive: false });
+
+function clearSignature(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSignature = false; 
+  el('sigHint').style.display = 'flex';
+}
+
+function saveCompany(){
+  localStorage.setItem('am_company', JSON.stringify({
+    name: el('compName').value, reg: el('compReg').value, vat: el('compVat').value,
+    phone: el('compPhone').value, tax: el('taxRate').value, iban: el('compIban').value,
+    bank: el('compBank').value, costLabor: el('costLabor').value, costEquip: el('costEquip').value,
+    costOverhead: el('costOverhead').value
+  }));
+}
+
+function loadCompany(){
+  const d = JSON.parse(localStorage.getItem('am_company') || '{}');
+  if(d.name) el('compName').value = d.name;
+  if(d.reg) el('compReg').value = d.reg;
+  if(d.vat) el('compVat').value = d.vat;
+  if(d.phone) el('compPhone').value = d.phone;
+  if(d.tax) el('taxRate').value = d.tax;
+  if(d.iban) el('compIban').value = d.iban;
+  if(d.bank) el('compBank').value = d.bank;
+  if(d.costLabor) el('costLabor').value = d.costLabor;
+  if(d.costEquip) el('costEquip').value = d.costEquip;
+  if(d.costOverhead) el('costOverhead').value = d.costOverhead;
+}
+
+function trueCost(){
+  return (+el('costLabor').value||0) + (+el('costEquip').value||0) + (+el('costOverhead').value||0);
+}
+
+function createNewQuote(){
+  currentQuoteId = '#AM-' + Math.floor(1000 + Math.random()*9000);
+  el('quoteIdDisplay').innerText = currentQuoteId;
+  el('quoteDate').innerText = new Date().toLocaleDateString('et-EE');
+  const due = new Date(); due.setDate(due.getDate()+14);
+  el('dueDate').value = due.toISOString().split('T')[0];
+  el('clientName').value = '';
+  el('clientPhone').value = '';
+  el('clientAddress').value = '';
+  items = [{desc:'Töö (tunnid)', type:'Labor', qty:8, price:0}];
+  clearSignature();
+  renderItems();
+  recalc();
+  setTimeout(resizeCanvas, 200);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function renderItems(){
+  const box = el('itemsContainer');
+  box.innerHTML = '';
+  items.forEach((it,i)=>{
+    const div = document.createElement('div');
+    div.className = 'bg-slate-900 border border-slate-700 rounded-2xl p-3 space-y-3 shadow-inner';
+    div.innerHTML = `
+      <input value="${it.desc||''}" placeholder="Kirjeldus" class="w-full bg-slate-800 rounded-xl p-3 text-white text-xs outline-none"
+        oninput="items[${i}].desc=this.value">
+      <div class="grid grid-cols-2 gap-2">
+        <select class="bg-slate-800 rounded-xl p-3 text-white text-xs" onchange="items[${i}].type=this.value;recalc()">
+          <option value="Labor" ${it.type==='Labor'?'selected':''}>Töö (tunnid)</option>
+          <option value="Material" ${it.type==='Material'?'selected':''}>Materjal</option>
+        </select>
+        <button type="button" onclick="removeItem(${i})" class="bg-red-500/15 text-red-400 rounded-xl p-3 font-bold text-xs">Kustuta rida</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <label class="text-slate-500 block mb-1">Kogus / Tunnid</label>
+          <input type="number" inputmode="decimal" value="${it.qty}" class="w-full bg-slate-800 rounded-xl p-3 text-white outline-none"
+            oninput="items[${i}].qty=parseFloat(this.value)||0;recalc()">
+        </div>
+        <div>
+          <label class="text-slate-500 block mb-1">Omakulu €/ühik</label>
+          <input type="number" inputmode="decimal" value="${it.price}" class="w-full bg-slate-800 rounded-xl p-3 text-white outline-none"
+            oninput="items[${i}].price=parseFloat(this.value)||0;recalc()">
+        </div>
+      </div>`;
+    box.appendChild(div);
+  });
+}
+
+function addItem(){ items.push({desc:'', type:'Labor', qty:1, price:0}); renderItems(); recalc(); }
+function removeItem(i){ items.splice(i,1); renderItems(); recalc(); }
+
+function recalc(){
+  const tc = trueCost();
+  el('trueCostHourlyDisplay').innerText = tc.toFixed(2) + ' €/h';
+  let base = 0;
+  items.forEach(it=>{
+    const unit = it.type==='Labor' ? (it.price>0 ? it.price : tc) : (it.price||0);
+    base += it.qty * unit;
+  });
+  const margin = +el('marginSlider').value || 0;
+  el('marginPercentDisplay').innerText = margin + '%';
+  const profit = base * margin / 100;
+  const sub = base + profit;
+  const tax = sub * ((+el('taxRate').value||0)/100);
+  const total = sub + tax;
+  el('jobCostDisplay').innerText = base.toFixed(2) + ' €';
+  el('jobProfitDisplay').innerText = '+' + profit.toFixed(2) + ' €';
+  el('taxRateLabel').innerText = el('taxRate').value || 0;
+  el('subtotalVal').innerText = sub.toFixed(2) + ' €';
+  el('taxVal').innerText = tax.toFixed(2) + ' €';
+  el('grandTotalVal').innerText = total.toFixed(2) + ' €';
+  saveCompany();
+}
+
+function saveQuote(){
+  let h = JSON.parse(localStorage.getItem('am_history')||'[]');
+  const data = {
+    id: currentQuoteId,
+    client: (el('clientName').value||'Nimetu').trim(),
+    phone: el('clientPhone').value,
+    addr: el('clientAddress').value,
+    dueDate: el('dueDate').value,
+    items: JSON.parse(JSON.stringify(items)),
+    margin: el('marginSlider').value,
+    sig: hasSignature ? canvas.toDataURL() : null,
+    total: el('grandTotalVal').innerText,
+    date: el('quoteDate').innerText
+  };
+  const idx = h.findIndex(q=>q.id===currentQuoteId);
+  if(idx>-1) h[idx]=data;
+  else h.push(data);
+  
+  localStorage.setItem('am_history', JSON.stringify(h));
+  renderHistory();
+  alert('Arve salvestatud!');
+}
+
+function renderHistory(){
+  const h = JSON.parse(localStorage.getItem('am_history')||'[]');
+  const box = el('historyContainer');
+  box.innerHTML = '';
+  if(!h.length){
+    box.innerHTML = '<p class="text-center text-slate-600 text-xs py-3">Ajalugu on tühi</p>';
+    return;
+  }
+  [...h].reverse().forEach(q=>{
+    const div = document.createElement('div');
+    div.className = 'bg-slate-900 border border-slate-700 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer';
+    div.onclick = ()=>loadQuote(q.id);
+    div.innerHTML = `<div class="min-w-0">
+        <div class="font-bold text-white text-xs truncate">${q.client}</div>
+        <div class="text-amber-400 text-[10px] font-mono">${q.id} • ${q.date}</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="font-bold text-xs text-white">${q.total}</div>
+        <button type="button" class="text-red-400 font-bold px-2 py-1 text-xs" onclick="event.stopPropagation();deleteQuote('${q.id}')">✕</button>
+      </div>`;
+    box.appendChild(div);
+  });
+}
+
+function loadQuote(id){
+  const q = (JSON.parse(localStorage.getItem('am_history')||'[]')).find(x=>x.id===id);
+  if(!q) return;
+  currentQuoteId = q.id;
+  el('quoteIdDisplay').innerText = q.id;
+  el('clientName').value = q.client||'';
+  el('clientPhone').value = q.phone||'';
+  el('clientAddress').value = q.addr||'';
+  if(q.dueDate) el('dueDate').value = q.dueDate;
+  if(q.margin) el('marginSlider').value = q.margin;
+  items = q.items||[];
+  clearSignature();
+  if(q.sig){
+    const img = new Image();
+    img.onload = ()=>{ ctx.drawImage(img,0,0); hasSignature=true; el('sigHint').style.display='none'; };
+    img.src = q.sig;
+  }
+  renderItems(); recalc();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function deleteQuote(id){
+  if(!confirm('Kas kustutada see arve?')) return;
+  let h = JSON.parse(localStorage.getItem('am_history')||'[]').filter(q=>q.id!==id);
+  localStorage.setItem('am_history', JSON.stringify(h));
+  renderHistory();
+  if(currentQuoteId===id) createNewQuote();
+}
+
+function clearHistory(){
+  if(!confirm('Kas tühjendada kogu ajalugu?')) return;
+  localStorage.removeItem('am_history');
+  renderHistory(); createNewQuote();
+}
+
+async function generatePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const W=210, M=15; let y=16;
+  const company = el('compName').value||'Firma';
+  const iban = el('compIban').value||'-';
+  const bank = el('compBank').value||'';
+  const client = el('clientName').value||'Klient';
+  const due = el('dueDate').value ? new Date(el('dueDate').value).toLocaleDateString('et-EE') : '-';
+  const tc = trueCost();
+  const margin = +el('marginSlider').value||0;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text(company, M, y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80);
+  if(el('compReg').value){ doc.text('Reg.kood: '+el('compReg').value, M, y); y+=4; }
+  if(el('compVat').value){ doc.text('KMKR nr: '+el('compVat').value, M, y); y+=4; }
+  if(el('compPhone').value){ doc.text(el('compPhone').value, M, y); y+=4; }
+  doc.text('Pangakonto: '+iban+(bank?' ('+bank+')':''), M, y);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(245,158,11);
+  doc.text('ARVE / PAKKUMINE', W-M, 16, {align:'right'});
+  doc.setFontSize(10); doc.setTextColor(20);
+  doc.text(currentQuoteId, W-M, 22, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80);
+  doc.text('Kuupäev: '+el('quoteDate').innerText, W-M, 27, {align:'right'});
+  doc.setTextColor(180,30,30);
+  doc.text('Maksetähtaeg: '+due, W-M, 32, {align:'right'});
+
+  y = Math.max(y+8, 40);
+  doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=8;
+  doc.setTextColor(20); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('OSTJA: '+client, M, y); y+=5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80);
+  doc.text([el('clientPhone').value, el('clientAddress').value].filter(Boolean).join(' | '), M, y); y+=8;
+
+  doc.setFillColor(15,23,42); doc.rect(M,y,W-2*M,7,'F');
+  doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  doc.text('KIRJELDUS', M+2, y+4.8);
+  doc.text('KOGUS', 140, y+4.8, {align:'right'});
+  doc.text('SUMMA', W-M-2, y+4.8, {align:'right'});
+  y+=7;
+
+  let sub=0;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  items.forEach((it,i)=>{
+    const unit = it.type==='Labor' ? (it.price>0?it.price:tc) : (it.price||0);
+    const line = it.qty*unit*(1+margin/100);
+    sub += line;
+    if(i%2===0){ doc.setFillColor(248,250,252); doc.rect(M,y,W-2*M,7,'F'); }
+    doc.setTextColor(30);
+    doc.text((it.desc||'-').substring(0,55), M+2, y+4.8);
+    doc.text(String(it.qty), 140, y+4.8, {align:'right'});
+    doc.text(line.toFixed(2)+' €', W-M-2, y+4.8, {align:'right'});
+    y+=7;
+  });
+
+  const tax = sub*((+el('taxRate').value||0)/100);
+  const total = sub+tax;
+  y+=6;
+  doc.setTextColor(80); doc.text('Vahesumma:', 120, y); doc.setTextColor(20); doc.text(sub.toFixed(2)+' €', W-M, y, {align:'right'}); y+=5;
+  doc.setTextColor(80); doc.text('KM:', 120, y); doc.setTextColor(20); doc.text(tax.toFixed(2)+' €', W-M, y, {align:'right'}); y+=6;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.setFillColor(245,158,11); doc.roundedRect(118, y-4, W-M-118, 9, 1,1,'F');
+  doc.setTextColor(15); doc.text('KOKKU TASUDA: '+total.toFixed(2)+' €', W-M-2, y+2, {align:'right'});
+  y+=14;
+  doc.setFillColor(241,245,249); doc.roundedRect(M,y,W-2*M,16,2,2,'F');
+  doc.setFontSize(8); doc.setTextColor(20);
+  doc.text('MAKSEINFO', M+3, y+5);
+  doc.setFont('helvetica','normal');
+  doc.text('Saaja: '+company+' | IBAN: '+iban, M+3, y+10);
+  doc.text('Selgitus: '+currentQuoteId+' | Summa: '+total.toFixed(2)+' €', M+3, y+14);
+  y+=22;
+  if(hasSignature){
+    doc.setFont('helvetica','bold'); doc.setTextColor(120); doc.text('KLIENDI ALLKIRI:', M, y);
+    doc.addImage(canvas.toDataURL('image/png'),'PNG', M, y+2, 50, 16);
+  }
+
+  const filename = 'Arve_'+currentQuoteId.replace('#','')+'.pdf';
+  const blob = doc.output('blob');
+  const file = new File([blob], filename, {type:'application/pdf'});
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Arve ' + currentQuoteId,
+        text: 'Arve ' + currentQuoteId + ' - ' + total.toFixed(2) + ' €'
+      });
+      return;
+    }
+  } catch (err) {}
+
+  doc.save(filename);
+}
+
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('load', ()=>{
+  loadCompany();
+  createNewQuote();
+  renderHistory();
+  setTimeout(resizeCanvas, 300);
+});
+</script>
+</body>
+</html>
