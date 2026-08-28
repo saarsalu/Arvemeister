@@ -6,7 +6,7 @@
   "display": "fullscreen",
   "orientation": "any",
   "background_color": "#0f172a",
-  "theme_color": "#f59e0b",
+  "theme_color": "#0f172a"
   "description": "Professionaalne hinnapakkumiste ja arvete generaator.",
   "icons": [
     {
