@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.saarsalu.twa",
+        "sha256_cert_fingerprints": ["77:37:9E:BF:53:13:1F:F6:C9:77:52:82:BC:E0:3B:EF:A2:D9:2F:37:00:D4:86:C8:DF:0E:7D:AE:FC:2D:2C:10"]
+      }
+    }]
