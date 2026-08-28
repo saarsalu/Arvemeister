@@ -3,7 +3,7 @@
   "name": "ArveMeister PRO",
   "short_name": "ArveMeister",
   "start_url": "index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#f59e0b",
